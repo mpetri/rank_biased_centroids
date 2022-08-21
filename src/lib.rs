@@ -36,27 +36,125 @@
 //!
 //! For example (also taken from the paper) for diffent rank orderings (R1-R4) of items A-G:
 //!
-//! |Rank| R1  | R2  | R3  | R4  |
-//! | ---| --- | --- | --- | --- |
-//! | 1  |  A  |  B  |  A  |  G  |
-//! | 2  |  D  |  D  |  B  |  D  |
-//! | 3  |  B  |  E  |  D  |  E  |
-//! | 4  |  C  |  C  |  C  |  A  |
-//! | 5  |  G  |  -  |  G  |  F  |
-//! | 6  |  F  |  -  |  F  |  C  |
-//! | 7  |  -  |  -  |  E  |  -  |
+//! <table>
+//!     <thead>
+//!         <tr>
+//!             <th>Rank</th>
+//!             <th>R1</th>
+//!             <th>R2</th>
+//!             <th>R3</th>
+//!             <th>R4</th>
+//!         </tr>
+//!     </thead>
+//!     <tbody>
+//!         <tr>
+//!             <td>1</td>
+//!             <td>A</td>
+//!             <td>B</td>
+//!             <td>A</td>
+//!             <td>G</td>
+//!         </td>
+//!         <tr>
+//!             <td>2</td>
+//!             <td>D</td>
+//!             <td>D</td>
+//!             <td>B</td>
+//!             <td>D</td>
+//!         </tr>
+//!         <tr>
+//!             <td>3</td>
+//!             <td>B</td>
+//!             <td>E</td>
+//!             <td>D</td>
+//!             <td>E</td>
+//!         </tr>
+//!         <tr>
+//!             <td>4</td>
+//!             <td>C</td>
+//!             <td>C</td>
+//!             <td>C</td>
+//!             <td>A</td>
+//!         </tr>
+//!         <tr>
+//!             <td>5</td>
+//!             <td>G</td>
+//!             <td>-</td>
+//!             <td>G</td>
+//!             <td>F</td>
+//!         </tr>
+//!         <tr>
+//!             <td>6</td>
+//!             <td>F</td>
+//!             <td>-</td>
+//!             <td>F</td>
+//!             <td>C</td>
+//!         </tr>
+//!         <tr>
+//!             <td>7</td>
+//!             <td>-</td>
+//!             <td>-</td>
+//!             <td>E</td>
+//!             <td>-</td>
+//!         </tr>
+//!     </tbody>
+//! </table>
 //!
 //! Depending on the persistence parameter `p` will result in different output orderings based on each items accumulated weights:
 //!
-//! |Rank|   p=0.6   | p=0.8   | p=0.9   |
-//! | ---| ------    | ------  | ------  |
-//! | 1  |  A(0.89)  | D(0.61) | D(0.35) |
-//! | 2  |  D(0.89)  | A(0.50) | C(0.28) |
-//! | 3  |  B(0.89)  | B(0.49) | A(0.27) |
-//! | 4  |  G(0.89)  | C(0.37) | B(0.27) |
-//! | 5  |  E(0.89)  | G(0.37) | G(0.23) |
-//! | 6  |  C(0.89)  | E(0.31) | E(0.22) |
-//! | 7  |  F(0.89)  | F(0.21) | F(0.18) |
+//! <table>
+//!     <thead>
+//!         <tr>
+//!             <th>Rank</th>
+//!             <th>p=0.6</th>
+//!             <th>p=0.8</th>
+//!             <th>p=0.9</th>
+//!         </tr>
+//!     </thead>
+//!     <tbody>
+//!         <tr>
+//!             <td>1</td>
+//!             <td>A (0.89)</td>
+//!             <td>D (0.61)</td>
+//!             <td>D (0.35)</td>
+//!         </td>
+//!         <tr>
+//!             <td>2</td>
+//!             <td>D (0.86)</td>
+//!             <td>A (0.50)</td>
+//!             <td>D (0.35)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>3</td>
+//!             <td>B (0.78)</td>
+//!             <td>B (0.49)</td>
+//!             <td>A (0.27)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>4</td>
+//!             <td>G (0.50) </td>
+//!             <td>C (0.37)</td>
+//!             <td>B (0.27)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>5</td>
+//!             <td>E (0.31)</td>
+//!             <td>G (0.37)</td>
+//!             <td>G (0.23)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>6</td>
+//!             <td>C (0.29)</td>
+//!             <td>E (0.31)</td>
+//!             <td>E (0.22)</td>
+//!         </tr>
+//!         <tr>
+//!             <td>7</td>
+//!             <td>F (0.11)</td>
+//!             <td>F (0.21)</td>
+//!             <td>F (0.18</td>
+//!         </tr>
+//!     </tbody>
+//! </table>
 //!
 //!
 //! # Code Example:
@@ -106,6 +204,20 @@ use std::hash::Hash;
 ///
 /// Returns the fused ranked list without scores.
 ///
+/// # Example:
+///
+/// ```
+/// use rank_biased_centroids::rbc;
+///
+/// let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
+/// let r2 = vec!['B', 'D', 'E', 'C'];
+/// let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
+/// let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
+/// let p = 0.9;
+/// let res = rbc(vec![r1, r2, r3, r4], p).unwrap();
+/// let exp = vec!['D','C','A','B','G','E','F'];
+/// assert!(res.into_iter().eq(exp.into_iter()));
+/// ```
 /// # Errors
 ///
 /// - Will return `Err` if `p` is not 0 <= p < 1
