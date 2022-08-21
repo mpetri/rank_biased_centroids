@@ -4,7 +4,7 @@
 //!
 //! This code implements the RBC rank fusion method, as described in:
 //!
-//!```ignore
+//!```bibtex
 //! @inproceedings{DBLP:conf/sigir/BaileyMST17,
 //!    author    = {Peter Bailey and
 //!                 Alistair Moffat and
@@ -69,8 +69,8 @@
 //! let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
 //! let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
 //! let p = 0.9;
-//! let result = rbc_with_scores(vec![r1, r2, r3, r4], p).unwrap();
-//! let expected = vec![
+//! let res = rbc_with_scores(vec![r1, r2, r3, r4], p).unwrap();
+//! let exp = vec![
 //!     ('D', 0.35),
 //!     ('C', 0.28),
 //!     ('A', 0.27),
@@ -79,9 +79,9 @@
 //!     ('E', 0.22),
 //!     ('F', 0.18),
 //! ];
-//! for ((c, s), (expected_c, expected_score)) in result.into_iter().zip(expected.into_iter()) {
-//!     assert_eq!(c, expected_c);
-//!     approx::assert_abs_diff_eq!(s, expected_score, epsilon = 0.005);
+//! for ((c, s), (ec, es)) in res.into_iter().zip(exp.into_iter()) {
+//!     assert_eq!(c, ec);
+//!     approx::assert_abs_diff_eq!(s, es, epsilon = 0.005);
 //! }
 //! ```
 //!
