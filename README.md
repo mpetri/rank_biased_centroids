@@ -5,7 +5,7 @@
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: https://opensource.org/licenses/MIT
 [docs-rs]: https://docs.rs/rank_biased_centroids
-[docs-badge]: https://img.shields.io/docsrs/rank_biased_centroids/0.1
+[docs-badge]: https://img.shields.io/docsrs/rank_biased_centroids/0.2.2
 
 The Rank-Biased Centroids (RBC) rank fusion method to combine multiple-rankings of objects.
 
