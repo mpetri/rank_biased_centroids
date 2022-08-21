@@ -1,9 +1,17 @@
-# Rank-Biased Centroids (RBC)
+# Rank-Biased Centroids (RBC) [![Crates.io][crates-badge]][crates-url] [![Docs.rs][docs-badge]][docs-rs] [![MIT licensed][mit-badge]][mit-url]
+
+[crates-badge]: https://img.shields.io/crates/v/rank_biased_centroids.svg
+[crates-url]: https://crates.io/crates/rank_biased_centroids
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: https://opensource.org/licenses/MIT
+[docs-rs]: https://docs.rs/rank_biased_centroids
+[docs-badge]: https://img.shields.io/docsrs/rank_biased_centroids/0.1
 
 The Rank-Biased Centroids (RBC) rank fusion method to combine multiple-rankings of objects.
 
 This code implements the RBC rank fusion method, as described in:
 
+```bibtex
 @inproceedings{DBLP:conf/sigir/BaileyMST17,
   author    = {Peter Bailey and
                Alistair Moffat and
@@ -21,13 +29,17 @@ This code implements the RBC rank fusion method, as described in:
   timestamp = {Wed, 25 Sep 2019 16:43:14 +0200},
   biburl    = {https://dblp.org/rec/conf/sigir/BaileyMST17.bib},
 }
+```
 
-The fundamental step in the working of RBC is the usage a `persistence`
-parameter (`p` or `phi`) to to fusion multiple ranked lists based only on rank information.
+The fundamental step in the working of RBC is the usage a `persistence` parameter (`p` or `phi`) to to fusion multiple ranked lists based only on rank information. Larger values of `p` give higher importance to elements at the top of each ranking. From the paper:
 
-Quote from the paper:
+> As extreme values, consider `p = 0` and `p = 1`. When `p = 0`, the agents only ever examine the first item in each of the input rankings, and the fused output is by decreasing score of firstrst preference; this is somewhat akin to a first-past-the-post election regime. When `p = 1`, each agent examines the whole of every list, and the fused ordering is determined by the number of lists that contain each item – a kind of "popularity count" of each item across the input sets. In between these extremes, the expected depth reached by the agents viewing the rankings is given by `1/(1 − p)`. For example, when `p = 0.9`, on average the first 10 items in each ranking are being used to contribute to the fused ordering; of course, in aggregate, across the whole universe of agents, all of the items in every ranking contribute to the overall outcome.
+
+More from the paper:
 
 > Each item at rank 1 <= x <= n when the rankings are over n items, we suggest that a geometrically decaying weight function be employed, with the distribution of d over depths x given by (1 − p) p^{x-1} for some value 0 <= p <= 1 determined by considering the purpose for which the fused ranking is being constructed. 
+
+# Example fusion
 
 For example (also taken from the paper) for diffent rank orderings (R1-R4) of items A-G:
 
@@ -41,8 +53,7 @@ For example (also taken from the paper) for diffent rank orderings (R1-R4) of it
 | 6  |  F  |  -  |  F  |  C  |
 | 7  |  -  |  -  |  E  |  -  |
 
-Depending on the persistence parameter `p` will result in different output orderings based
-on each items accumulated weights:
+Depending on the persistence parameter `p` will result in different output orderings based on each items accumulated weights:
 
 |Rank|   p=0.6   | p=0.8   | p=0.9   |
 | ---| ------    | ------  | ------  |
@@ -54,9 +65,7 @@ on each items accumulated weights:
 | 6  |  C(0.89)  | E(0.31) | E(0.22) |
 | 7  |  F(0.89)  | F(0.21) | F(0.18) |
 
-This code and docs were adapted from the original RBO codebase of William Webber
-
-# Example:
+# Code Example:
 
 
 ```rust
@@ -84,4 +93,6 @@ for ((c, s), (expected_c, expected_score)) in result.into_iter().zip(expected.in
 
 ```
 
-License: MIT
+# License
+
+MIT
