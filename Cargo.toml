@@ -1,0 +1,29 @@
+[package]
+name = "rank_biased_centroids"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Matthias Petri <Matthias.Petri@gmail.com>"]
+readme = "README.md"
+keywords = ["rbc", "rank-fusion", "ranking"]
+repository = "https://github.com/mpetri/rank_biased_centroids"
+homepage = "https://github.com/mpetri/rank_biased_centroids"
+documentation = "https://docs.rs/rank_biased_centroids"
+description = """
+Rank-Biased Centroids (RBC): A rank fusion method proposed by Baily, et al. See:
+
+@article{DBLP:conf/sigir/BaileyMST17,
+    author = "Peter Bailey, Alistair Moffat, Falk Scholer, Paul Thomas",
+    title = "Retrieval Consistency in the Presence of Query Variations",
+    journal = "ACM SIGIR",
+    year = {2017},
+}
+
+for details.
+"""
+
+[dev-dependencies]
+approx = "0.5.1"
+
+[dependencies]
+thiserror = "1"
