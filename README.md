@@ -5,7 +5,7 @@
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: https://opensource.org/licenses/MIT
 [docs-rs]: https://docs.rs/rank_biased_centroids
-[docs-badge]: https://img.shields.io/docsrs/rank_biased_centroids/0.2.2
+[docs-badge]: https://img.shields.io/docsrs/rank_biased_centroids/0.3.1
 
 The Rank-Biased Centroids (RBC) rank fusion method to combine multiple-rankings of objects.
 
@@ -67,16 +67,16 @@ Depending on the persistence parameter `p` will result in different output order
 
 # Code Example:
 
-
+Non weighted runs:
 
 ```rust
-use rank_biased_centroids::rbc_with_scores;
+use rank_biased_centroids::rbc;
 let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
 let r2 = vec!['B', 'D', 'E', 'C'];
 let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
 let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
 let p = 0.9;
-let res = rbc_with_scores(vec![r1, r2, r3, r4], p).unwrap();
+let res = rbc(vec![r1, r2, r3, r4], p).unwrap();
 let exp = vec![
     ('D', 0.35),
     ('C', 0.28),
@@ -86,7 +86,33 @@ let exp = vec![
     ('E', 0.22),
     ('F', 0.18),
 ];
-for ((c, s), (ec, es)) in res.into_iter().zip(exp.into_iter()) {
+for ((c, s), (ec, es)) in res.into_ranked_list_with_scores().into_iter().zip(exp.into_iter()) {
+    assert_eq!(c, ec);
+    approx::assert_abs_diff_eq!(s, es, epsilon = 0.005);
+}
+```
+
+Weighted runs:
+
+```rust
+use rank_biased_centroids::rbc_with_weights;
+let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
+let r2 = vec!['B', 'D', 'E', 'C'];
+let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
+let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
+let p = 0.9;
+let run_weights = vec![0.3, 1.3, 0.4, 1.4];
+let res = rbc_with_weights(vec![r1, r2, r3, r4],run_weights, p).unwrap();
+let exp = vec![
+    ('D', 0.30),
+    ('E', 0.24),
+    ('C', 0.23),
+    ('B', 0.19),
+    ('G', 0.19),
+    ('A', 0.17),
+    ('F', 0.13),
+];
+for ((c, s), (ec, es)) in res.into_ranked_list_with_scores().into_iter().zip(exp.into_iter()) {
     assert_eq!(c, ec);
     approx::assert_abs_diff_eq!(s, es, epsilon = 0.005);
 }
@@ -95,3 +121,4 @@ for ((c, s), (ec, es)) in res.into_iter().zip(exp.into_iter()) {
 # License
 
 MIT
+

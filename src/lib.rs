@@ -1,4 +1,4 @@
-#![warn(missing_debug_implementations, rust_2018_idioms)]
+#![warn(missing_debug_implementations, rust_2018_idioms, clippy::pedantic)]
 //!
 //! The Rank-Biased Centroids (RBC) rank fusion method to combine multiple-rankings of objects.
 //!
@@ -160,14 +160,14 @@
 //! # Code Example:
 //!
 //! ```
-//! use rank_biased_centroids::rbc_with_scores;
+//! use rank_biased_centroids::rbc;
 //!
 //! let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
 //! let r2 = vec!['B', 'D', 'E', 'C'];
 //! let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
 //! let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
 //! let p = 0.9;
-//! let res = rbc_with_scores(vec![r1, r2, r3, r4], p).unwrap();
+//! let res = rbc(vec![r1, r2, r3, r4], p).unwrap();
 //! let exp = vec![
 //!     ('D', 0.35),
 //!     ('C', 0.28),
@@ -177,12 +177,37 @@
 //!     ('E', 0.22),
 //!     ('F', 0.18),
 //! ];
-//! for ((c, s), (ec, es)) in res.into_iter().zip(exp.into_iter()) {
+//! for ((c, s), (ec, es)) in res.into_ranked_list_with_scores().into_iter().zip(exp.into_iter()) {
 //!     assert_eq!(c, ec);
 //!     approx::assert_abs_diff_eq!(s, es, epsilon = 0.005);
 //! }
 //! ```
 //!
+//! Weighted runs:
+//!
+//! ```rust
+//! use rank_biased_centroids::rbc_with_weights;
+//! let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
+//! let r2 = vec!['B', 'D', 'E', 'C'];
+//! let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
+//! let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
+//! let p = 0.9;
+//! let run_weights = vec![0.3, 1.3, 0.4, 1.4];
+//! let res = rbc_with_weights(vec![r1, r2, r3, r4],run_weights, p).unwrap();
+//! let exp = vec![
+//!     ('D', 0.30),
+//!     ('E', 0.24),
+//!     ('C', 0.23),
+//!     ('B', 0.19),
+//!     ('G', 0.19),
+//!     ('A', 0.17),
+//!     ('F', 0.13),
+//! ];
+//! for ((c, s), (ec, es)) in res.into_ranked_list_with_scores().into_iter().zip(exp.into_iter()) {
+//!     assert_eq!(c, ec);
+//!     approx::assert_abs_diff_eq!(s, es, epsilon = 0.005);
+//! }
+//! ```
 //!
 mod state;
 
@@ -192,12 +217,15 @@ use thiserror::Error;
 pub enum RbcError {
     #[error("Persistance parameter p must be 0.0 <= p < 1.0")]
     InvalidPersistance,
-    #[error("Individual ranked lists should not contain duplicates")]
-    DuplicatesInList,
+    #[error("There need to be as many run weights as runs + not inf or nan")]
+    InvalidRunWeights,
 }
 
 use state::RbcState;
+use std::fmt::Debug;
 use std::hash::Hash;
+
+pub use state::RbcRankedList;
 
 ///
 /// Main RBC function implementing the computation of Rank-Biased Centroids.
@@ -216,7 +244,7 @@ use std::hash::Hash;
 /// let p = 0.9;
 /// let res = rbc(vec![r1, r2, r3, r4], p).unwrap();
 /// let exp = vec!['D','C','A','B','G','E','F'];
-/// assert!(res.into_iter().eq(exp.into_iter()));
+/// assert!(res.into_ranked_list().into_iter().eq(exp.into_iter()));
 /// ```
 /// # Errors
 ///
@@ -225,11 +253,11 @@ use std::hash::Hash;
 pub fn rbc<I>(
     input_rankings: I,
     p: f64,
-) -> Result<Vec<<<I as IntoIterator>::Item as IntoIterator>::Item>, RbcError>
+) -> Result<RbcRankedList<<<I as IntoIterator>::Item as IntoIterator>::Item>, RbcError>
 where
     I: IntoIterator,
     I::Item: IntoIterator,
-    <<I as IntoIterator>::Item as IntoIterator>::Item: Eq + Hash,
+    <<I as IntoIterator>::Item as IntoIterator>::Item: Eq + Hash + Debug,
 {
     let mut rbc_state = RbcState::with_persistence(p)?;
 
@@ -237,7 +265,7 @@ where
     let ranked_list_iter = input_rankings.into_iter();
     for ranked_list in ranked_list_iter {
         for (rank, item) in ranked_list.into_iter().enumerate() {
-            rbc_state.update(rank, item);
+            rbc_state.update(rank, item, None);
         }
     }
 
@@ -248,31 +276,61 @@ where
 ///
 /// Main RBC function implementing the computation of Rank-Biased Centroids.
 ///
-/// Returns the fused ranked list WITH scores.
+/// Returns the fused ranked list without scores.
 ///
+/// # Example:
+///
+/// ```
+/// use rank_biased_centroids::rbc_with_weights;
+///
+/// let r1 = vec!['A', 'D', 'B', 'C', 'G', 'F'];
+/// let r2 = vec!['B', 'D', 'E', 'C'];
+/// let r3 = vec!['A', 'B', 'D', 'C', 'G', 'F', 'E'];
+/// let r4 = vec!['G', 'D', 'E', 'A', 'F', 'C'];
+/// let p = 0.9;
+/// let res = rbc_with_weights(vec![r1, r2, r3, r4],vec![0.3,1.3,0.4,1.4], p).unwrap();
+/// let exp = vec!['D','E','C','B','G','A','F'];
+/// let result = res.into_ranked_list();
+/// assert!(result.into_iter().eq(exp.into_iter()));
+/// ```
 /// # Errors
 ///
 /// - Will return `Err` if `p` is not 0 <= p < 1
+/// - Will return `Err` if run weights len != num runs
+/// - Will return `Err` if run weights are inf or NaN
 ///
-pub fn rbc_with_scores<I>(
+pub fn rbc_with_weights<I>(
     input_rankings: I,
+    run_weights: impl IntoIterator<Item = f64>,
     p: f64,
-) -> Result<Vec<(<<I as IntoIterator>::Item as IntoIterator>::Item, f64)>, RbcError>
+) -> Result<RbcRankedList<<<I as IntoIterator>::Item as IntoIterator>::Item>, RbcError>
 where
     I: IntoIterator,
     I::Item: IntoIterator,
-    <<I as IntoIterator>::Item as IntoIterator>::Item: Eq + Hash,
+    <<I as IntoIterator>::Item as IntoIterator>::Item: Eq + Hash + Debug,
 {
     let mut rbc_state = RbcState::with_persistence(p)?;
 
     // iterate over all lists
-    let ranked_list_iter = input_rankings.into_iter();
-    for ranked_list in ranked_list_iter {
+    let mut run_weights_iter = run_weights.into_iter();
+    let mut ranked_list_iter = input_rankings.into_iter();
+    for ranked_list in ranked_list_iter.by_ref() {
+        let run_weight = match run_weights_iter.next() {
+            None => return Err(RbcError::InvalidRunWeights),
+            Some(w) if w.is_infinite() => return Err(RbcError::InvalidRunWeights),
+            Some(w) if w.is_nan() => return Err(RbcError::InvalidRunWeights),
+            Some(w) => Some(w),
+        };
         for (rank, item) in ranked_list.into_iter().enumerate() {
-            rbc_state.update(rank, item);
+            rbc_state.update(rank, item, run_weight);
         }
     }
 
+    // more ranked list than weights!
+    if ranked_list_iter.next().is_some() {
+        return Err(RbcError::InvalidRunWeights);
+    }
+
     // finalize
-    Ok(rbc_state.into_result_with_scores())
+    Ok(rbc_state.into_result())
 }
